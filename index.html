@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="initial-scale=1,user-scalable=no,maximum-scale=1,width=device-width">
+        <meta name="mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <link rel="stylesheet" href="css/leaflet.css">
+        <link rel="stylesheet" href="css/L.Control.Layers.Tree.css">
+        <link rel="stylesheet" href="css/L.Control.Locate.min.css">
+        <link rel="stylesheet" href="css/qgis2web.css">
+        <link rel="stylesheet" href="css/fontawesome-all.min.css">
+        <link rel="stylesheet" href="css/leaflet-control-geocoder.Geocoder.css">
+        <link rel="stylesheet" href="css/leaflet-measure.css">
+        <style>
+        #map {
+            width: 1037px;
+            height: 805px;
+        }
+        </style>
+        <title></title>
+    </head>
+    <body>
+        <div id="map">
+        </div>
+        <script src="js/qgis2web_expressions.js"></script>
+        <script src="js/leaflet.js"></script>
+        <script src="js/L.Control.Layers.Tree.min.js"></script>
+        <script src="js/L.Control.Locate.min.js"></script>
+        <script src="js/leaflet.rotatedMarker.js"></script>
+        <script src="js/leaflet.pattern.js"></script>
+        <script src="js/leaflet-hash.js"></script>
+        <script src="js/Autolinker.min.js"></script>
+        <script src="js/rbush.min.js"></script>
+        <script src="js/labelgun.min.js"></script>
+        <script src="js/labels.js"></script>
+        <script src="js/leaflet-control-geocoder.Geocoder.js"></script>
+        <script src="js/leaflet-measure.js"></script>
+        <script src="data/EneaArkusz2_1.js"></script>
+        <script>
+        var highlightLayer;
+        function highlightFeature(e) {
+            highlightLayer = e.target;
+
+            if (e.target.feature.geometry.type === 'LineString' || e.target.feature.geometry.type === 'MultiLineString') {
+              highlightLayer.setStyle({
+                color: '#ffff00',
+              });
+            } else {
+              highlightLayer.setStyle({
+                fillColor: '#ffff00',
+                fillOpacity: 1
+              });
+            }
+            highlightLayer.openPopup();
+        }
+        var map = L.map('map', {
+            zoomControl:true, maxZoom:28, minZoom:1
+        }).fitBounds([[50.594976009384304,12.731675686812235],[54.60975930479102,21.307529018228433]]);
+        var hash = new L.Hash(map);
+        map.attributionControl.setPrefix('<a href="https://github.com/tomchadwin/qgis2web" target="_blank">qgis2web</a> &middot; <a href="https://leafletjs.com" title="A JS library for interactive maps">Leaflet</a> &middot; <a href="https://qgis.org">QGIS</a>');
+        var autolinker = new Autolinker({truncate: {length: 30, location: 'smart'}});
+        function removeEmptyRowsFromPopupContent(content, feature) {
+         var tempDiv = document.createElement('div');
+         tempDiv.innerHTML = content;
+         var rows = tempDiv.querySelectorAll('tr');
+         for (var i = 0; i < rows.length; i++) {
+             var td = rows[i].querySelector('td.visible-with-data');
+             var key = td ? td.id : '';
+             if (td && td.classList.contains('visible-with-data') && feature.properties[key] == null) {
+                 rows[i].parentNode.removeChild(rows[i]);
+             }
+         }
+         return tempDiv.innerHTML;
+        }
+        document.querySelector(".leaflet-popup-pane").addEventListener("load", function(event) {
+          var tagName = event.target.tagName,
+            popup = map._popup;
+          // Also check if flag is already set.
+          if (tagName === "IMG" && popup && !popup._updated) {
+            popup._updated = true; // Set flag to prevent looping.
+            popup.update();
+          }
+        }, true);
+        L.control.locate({locateOptions: {maxZoom: 19}}).addTo(map);
+        var measureControl = new L.Control.Measure({
+            position: 'topleft',
+            primaryLengthUnit: 'meters',
+            secondaryLengthUnit: 'kilometers',
+            primaryAreaUnit: 'sqmeters',
+            secondaryAreaUnit: 'hectares'
+        });
+        measureControl.addTo(map);
+        document.getElementsByClassName('leaflet-control-measure-toggle')[0]
+        .innerHTML = '';
+        document.getElementsByClassName('leaflet-control-measure-toggle')[0]
+        .className += ' fas fa-ruler';
+        var bounds_group = new L.featureGroup([]);
+        function setBounds() {
+        }
+        map.createPane('pane_OpenStreetMap_0');
+        map.getPane('pane_OpenStreetMap_0').style.zIndex = 400;
+        var layer_OpenStreetMap_0 = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            pane: 'pane_OpenStreetMap_0',
+            opacity: 1.0,
+            attribution: '',
+            minZoom: 1,
+            maxZoom: 28,
+            minNativeZoom: 0,
+            maxNativeZoom: 19
+        });
+        layer_OpenStreetMap_0;
+        map.addLayer(layer_OpenStreetMap_0);
+        function pop_EneaArkusz2_1(feature, layer) {
+            layer.on({
+                mouseout: function(e) {
+                    for (var i in e.target._eventParents) {
+                        if (typeof e.target._eventParents[i].resetStyle === 'function') {
+                            e.target._eventParents[i].resetStyle(e.target);
+                        }
+                    }
+                    if (typeof layer.closePopup == 'function') {
+                        layer.closePopup();
+                    } else {
+                        layer.eachLayer(function(feature){
+                            feature.closePopup()
+                        });
+                    }
+                },
+                mouseover: highlightFeature,
+            });
+            var popupContent = '<table>\
+                    <tr>\
+                        <td class="visible-with-data" id="teryt"colspan="2"><strong>teryt</strong><br />' + (feature.properties['teryt'] !== null ? autolinker.link(feature.properties['teryt'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td class="visible-with-data" id="pow_m2"colspan="2"><strong>pow_m2</strong><br />' + (feature.properties['pow_m2'] !== null ? autolinker.link(feature.properties['pow_m2'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td class="visible-with-data" id="Projekt"colspan="2"><strong>Projekt</strong><br />' + (feature.properties['Projekt'] !== null ? autolinker.link(feature.properties['Projekt'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td class="visible-with-data" id="Planowane MW"colspan="2"><strong>Planowane MW</strong><br />' + (feature.properties['Planowane MW'] !== null ? autolinker.link(feature.properties['Planowane MW'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td class="visible-with-data" id="Land Manager"colspan="2"><strong>Land Manager</strong><br />' + (feature.properties['Land Manager'] !== null ? autolinker.link(feature.properties['Land Manager'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td class="visible-with-data" id="Umowa"colspan="2"><strong>Umowa</strong><br />' + (feature.properties['Umowa'] !== null ? autolinker.link(feature.properties['Umowa'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td class="visible-with-data" id="DŚ"colspan="2"><strong>DŚ</strong><br />' + (feature.properties['DŚ'] !== null ? autolinker.link(feature.properties['DŚ'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td class="visible-with-data" id="WZ"colspan="2"><strong>WZ</strong><br />' + (feature.properties['WZ'] !== null ? autolinker.link(feature.properties['WZ'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td class="visible-with-data" id="WZ prawomocne na właściciela"colspan="2"><strong>WZ prawomocne na właściciela</strong><br />' + (feature.properties['WZ prawomocne na właściciela'] !== null ? autolinker.link(feature.properties['WZ prawomocne na właściciela'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td class="visible-with-data" id="WZ Przenienienie"colspan="2"><strong>WZ Przenienienie</strong><br />' + (feature.properties['WZ Przenienienie'] !== null ? autolinker.link(feature.properties['WZ Przenienienie'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td class="visible-with-data" id="WZ Prawomocne przeniesienie"colspan="2"><strong>WZ Prawomocne przeniesienie</strong><br />' + (feature.properties['WZ Prawomocne przeniesienie'] !== null ? autolinker.link(feature.properties['WZ Prawomocne przeniesienie'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td class="visible-with-data" id="WP"colspan="2"><strong>WP</strong><br />' + (feature.properties['WP'] !== null ? autolinker.link(feature.properties['WP'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td class="visible-with-data" id="link do trello"colspan="2"><strong>link do trello</strong><br />' + (feature.properties['link do trello'] !== null ? autolinker.link(feature.properties['link do trello'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td class="visible-with-data" id="Powierzchnia działki [ha]"colspan="2"><strong>Powierzchnia działki [ha]</strong><br />' + (feature.properties['Powierzchnia działki [ha]'] !== null ? autolinker.link(feature.properties['Powierzchnia działki [ha]'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td class="visible-with-data" id="Województwo"colspan="2"><strong>Województwo</strong><br />' + (feature.properties['Województwo'] !== null ? autolinker.link(feature.properties['Województwo'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td class="visible-with-data" id="Powiat_1"colspan="2"><strong>Powiat_1</strong><br />' + (feature.properties['Powiat_1'] !== null ? autolinker.link(feature.properties['Powiat_1'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td class="visible-with-data" id="Gmina_1"colspan="2"><strong>Gmina_1</strong><br />' + (feature.properties['Gmina_1'] !== null ? autolinker.link(feature.properties['Gmina_1'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td class="visible-with-data" id="Obręb"colspan="2"><strong>Obręb</strong><br />' + (feature.properties['Obręb'] !== null ? autolinker.link(feature.properties['Obręb'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td class="visible-with-data" id="Nr działki (podpisana umowa)"colspan="2"><strong>Nr działki (podpisana umowa)</strong><br />' + (feature.properties['Nr działki (podpisana umowa)'] !== null ? autolinker.link(feature.properties['Nr działki (podpisana umowa)'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td class="visible-with-data" id="Operator"colspan="2"><strong>Operator</strong><br />' + (feature.properties['Operator'] !== null ? autolinker.link(feature.properties['Operator'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2"><strong>GPZ</strong><br />' + (feature.properties['GPZ'] !== null ? autolinker.link(feature.properties['GPZ'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td class="visible-with-data" id="Kontakt WP"colspan="2"><strong>Kontakt WP</strong><br />' + (feature.properties['Kontakt WP'] !== null ? autolinker.link(feature.properties['Kontakt WP'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                </table>';
+            layer.bindPopup(popupContent, {maxHeight: 400});
+            var popup = layer.getPopup();
+            var content = popup.getContent();
+            var updatedContent = removeEmptyRowsFromPopupContent(content, feature);
+            popup.setContent(updatedContent);
+        }
+
+        function style_EneaArkusz2_1_0() {
+            return {
+                pane: 'pane_EneaArkusz2_1',
+                opacity: 1,
+                color: 'rgba(9,223,202,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 3.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(106,231,43,0.5333333333333333)',
+                interactive: true,
+            }
+        }
+        map.createPane('pane_EneaArkusz2_1');
+        map.getPane('pane_EneaArkusz2_1').style.zIndex = 401;
+        map.getPane('pane_EneaArkusz2_1').style['mix-blend-mode'] = 'normal';
+        var layer_EneaArkusz2_1 = new L.geoJson(json_EneaArkusz2_1, {
+            attribution: '',
+            interactive: true,
+            dataVar: 'json_EneaArkusz2_1',
+            layerName: 'layer_EneaArkusz2_1',
+            pane: 'pane_EneaArkusz2_1',
+            onEachFeature: pop_EneaArkusz2_1,
+            style: style_EneaArkusz2_1_0,
+        });
+        bounds_group.addLayer(layer_EneaArkusz2_1);
+        map.addLayer(layer_EneaArkusz2_1);
+        var osmGeocoder = new L.Control.Geocoder({
+            collapsed: true,
+            position: 'topleft',
+            text: 'Search',
+            title: 'Testing'
+        }).addTo(map);
+        document.getElementsByClassName('leaflet-control-geocoder-icon')[0]
+        .className += ' fa fa-search';
+        document.getElementsByClassName('leaflet-control-geocoder-icon')[0]
+        .title += 'Search for a place';
+        var baseMaps = {};
+        var overlaysTree = [
+            {label: '<img src="legend/EneaArkusz2_1.png" /> Enea - Arkusz2', layer: layer_EneaArkusz2_1},
+            {label: "OpenStreetMap", layer: layer_OpenStreetMap_0},]
+        var lay = L.control.layers.tree(null, overlaysTree,{
+            //namedToggle: true,
+            //selectorBack: false,
+            //closedSymbol: '&#8862; &#x1f5c0;',
+            //openedSymbol: '&#8863; &#x1f5c1;',
+            //collapseAll: 'Collapse all',
+            //expandAll: 'Expand all',
+            collapsed: false, 
+        });
+        lay.addTo(map);
+        setBounds();
+        var i = 0;
+        layer_EneaArkusz2_1.eachLayer(function(layer) {
+            var context = {
+                feature: layer.feature,
+                variables: {}
+            };
+            layer.bindTooltip((layer.feature.properties['teryt'] !== null?String('<div style="color: #323232; font-size: 10pt; font-family: \'Liberation Sans\', sans-serif;">' + layer.feature.properties['teryt']) + '</div>':''), {permanent: true, offset: [-0, -16], className: 'css_EneaArkusz2_1'});
+            labels.push(layer);
+            totalMarkers += 1;
+              layer.added = true;
+              addLabel(layer, i);
+              i++;
+        });
+        resetLabels([layer_EneaArkusz2_1]);
+        map.on("zoomend", function(){
+            resetLabels([layer_EneaArkusz2_1]);
+        });
+        map.on("layeradd", function(){
+            resetLabels([layer_EneaArkusz2_1]);
+        });
+        map.on("layerremove", function(){
+            resetLabels([layer_EneaArkusz2_1]);
+        });
+        </script>
+    </body>
+</html>
